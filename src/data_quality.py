@@ -320,4 +320,3 @@ class DataQualityChecker:
         """
         return len(self.critical_failures) > 0
 
-

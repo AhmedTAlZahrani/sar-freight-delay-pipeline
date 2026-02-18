@@ -308,4 +308,3 @@ def generate_freight_data(output_path="data/freight_shipments.csv"):
 
 if __name__ == "__main__":
     generate_freight_data()
-

@@ -267,4 +267,3 @@ class DataTransformer:
             DataFrame with daily and rolling metrics.
         """
         return self.rolling_kpis
-
