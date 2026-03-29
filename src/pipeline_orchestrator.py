@@ -1,9 +1,19 @@
 import json
+import logging
 import time
 from pathlib import Path
 from datetime import datetime
 
 import pandas as pd
+
+_log_dir = Path("logs")
+_log_dir.mkdir(parents=True, exist_ok=True)
+logger = logging.getLogger("freight_pipeline")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    _fh = logging.FileHandler(_log_dir / "pipeline.log")
+    _fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s"))
+    logger.addHandler(_fh)
 
 from .data_generator import FreightDataGenerator
 from .data_ingestion import DataIngestor
@@ -45,6 +55,7 @@ class PipelineOrchestrator:
         """
         self.start_time = time.time()
 
+        logger.info("Pipeline started (mode=%s)", self.mode)
         print("=" * 60)
         print(f"SAR FREIGHT DELAY PIPELINE ({self.mode.upper()} REFRESH)")
         print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -58,10 +69,12 @@ class PipelineOrchestrator:
             self._step_aggregate()
             self._step_report()
         except PipelineHaltError as e:
+            logger.error("Pipeline halted: %s", e)
             print(f"\nPIPELINE HALTED: {e}")
             self._save_pipeline_state("HALTED")
             return self._build_summary("HALTED")
 
+        logger.info("Pipeline completed successfully")
         self._save_pipeline_state("SUCCESS")
         summary = self._build_summary("SUCCESS")
         self._print_summary(summary)
@@ -168,6 +181,7 @@ class PipelineOrchestrator:
             "row_count": row_count,
             "timestamp": datetime.now().isoformat(),
         })
+        logger.info("Step '%s' completed in %.2fs (%d rows)", name, elapsed, row_count)
         print(f"  Step '{name}' completed in {elapsed:.2f}s")
 
     def _build_summary(self, status):
